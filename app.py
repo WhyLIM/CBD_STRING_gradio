@@ -156,13 +156,94 @@ def get_enrichment(identifiers, species):
     df = pd.read_csv(io.StringIO(data), sep="\t")
 
     # 处理不必要的列
-    df["genes_in_background"] = df["number_of_genes"].astype(str) + "/" + df["number_of_genes_in_background"].astype(str)
+    df["genes_in_background"] = df["number_of_genes"].astype(str) + '/' + df["number_of_genes_in_background"].astype(str)
     df.drop(["number_of_genes", "number_of_genes_in_background", "ncbiTaxonId", "preferredNames"], axis=1, inplace=True)
     # 重新指定列的顺序
     cols = list(df.columns)
     cols.remove("genes_in_background")
     cols.insert(2, "genes_in_background")
     df = df[cols]
+
+    # 添加超链接
+    url_dict = {
+        "COMPARTMENTS": {
+            "url_head": f"https://compartments.jensenlab.org/Entity?order=textmining,knowledge,predictions&knowledge=10&textmining=10&predictions=10&type1=-22&type2={species}&id1=GO:",
+            "color": "#ffb142"
+        },
+        "TISSUES": {
+            "url_head": f"https://tissues.jensenlab.org/Entity?order=textmining,knowledge,experiments&knowledge=10&experiments=10&textmining=10&type1=-25&type2={species}&id1=",
+            "color": "#B33771"
+        },
+        "DISEASES": {
+            "url_head": f"https://diseases.jensenlab.org/Entity?order=textmining,knowledge,experiments&textmining=10&knowledge=10&experiments=10&type1=-26&type2={species}&id1=",
+            "color": "#eb2f06"
+        },
+        "Process": {
+            "url_head": f"http://amigo.geneontology.org/amigo/term/",
+            "color": "#33d9b2"
+        },
+        "Component": {
+            "url_head": f"http://amigo.geneontology.org/amigo/term/",
+            "color": "#ff5252"
+        },
+        "Function": {
+            "url_head": f"http://amigo.geneontology.org/amigo/term/",
+            "color": "#34ace0"
+        },
+        "Keyword": {
+            "url_head": f"https://www.uniprot.org/keywords/",
+            "color": "black"
+        },
+        "KEGG": {
+            "url_head": f"https://www.kegg.jp/kegg-bin/show_pathway?",
+            "color": "#f78fb3"
+        },
+        "SMART": {
+            "url_head": f"http://smart.embl-heidelberg.de/smart/do_annotation.pl?DOMAIN=",
+            "color": "#BDC581"
+        },
+        "InterPro": {
+            "url_head": f"https://www.ebi.ac.uk/interpro/entry/",
+            "color": "#2daec1"
+        },
+        "Pfam": {
+            "url_head": f"https://pfam.xfam.org/family/",
+            "color": "#8854d0"
+        },
+        "PMID": {
+            "url_head": f"https://pubmed.ncbi.nlm.nih.gov/",
+            "color": "#20558a"
+        },
+        "RCTM": {
+            "url_head": f"https://reactome.org/content/detail/R-",
+            "color": "#778beb"
+        },
+        "WikiPathways": {
+            "url_head": f"https://www.wikipathways.org/index.php/Pathway:",
+            "color": "#a5b1c2"
+        },
+        "HPO": {
+            "url_head": f"https://monarchinitiative.org/phenotype/",
+            "color": "#4b6584"
+        },
+        "NetworkNeighborAL": {
+            "url_head": f"https://string-db.org/cgi/network?input_query_species={species}&network_term_id=",
+            "color": "#e17055"
+        }
+    }
+
+    line = -1
+    for term in df["term"]:
+        line += 1
+        category = df.iloc[line, 0]
+        url_head = url_dict[category]["url_head"]
+        color = url_dict[category]["color"]
+        if category in ("COMPARTMENTS", "PMID"):
+            term_text = term.split(':')[1]
+        else:
+            term_text = term
+        df.iloc[line, 1] = f'<a href="{url_head}{term_text}" target="_blank" style="color: {color};font-weight:bold;">{term}</a>'
+
     return df
 
 def visible(identifiers):
@@ -356,7 +437,9 @@ with gr.Blocks(css=css) as demo:
             # 网络参数组件
             network_stats = gr.Dataframe(label="Network Stats:", elem_id="network-stats", visible=False)
             # topo_para = gr.Dataframe(label="Topological Parameters:", elem_id="topo-para", visible=False)
-            enrichment = gr.Dataframe(label="Functional Enrichments:", elem_id="enrichment", visible=False)
+            enrichment = gr.Dataframe(label="Functional Enrichments:", 
+                                                 datatype=["str", "html", "str", "str", "number", "number", "str"], 
+                                                 elem_id="enrichment", visible=False)
 
     # 按钮监听
     # 清空输入
