@@ -115,10 +115,10 @@ def get_network_stats(identifiers, species):
     response = requests.get(url)
     data = response.text
     df = pd.read_csv(io.StringIO(data), sep="\t")
-    return df
-    # df_T = df.transpose().reset_index()
-    # df_T.columns = ["Parameters", "Value"]
-    # return df_T
+    # return df
+    df_T = df.transpose().reset_index()
+    df_T.columns = ["Parameters", "Value"]
+    return df_T
 
 def calculate_topo(identifiers, species, required_score, network_type):
     # 获取相互作用网络 json
@@ -275,6 +275,12 @@ def download_all(identifiers, species, required_score, network_type):
         z.writestr(filename, file_obj.read())
     # 关闭zip文件对象
     z.close()
+    return "cbd_string_analysis.zip"
+
+def download_visible(identifiers, species, required_score, network_type):
+    file = download_all(identifiers, species, required_score, network_type)
+    if file != None:
+        return file_download.update(visible=True)
 
 example = f"""
     <div class="iframe-container" style="position: relative;overflow: hidden;padding-top: 56.25%">
@@ -320,14 +326,26 @@ example = f"""
     </div>"""
 
 css = """
+:root {
+    --radius-lg: 5px;
+    --color-background-primary: #f9fbff;
+    --color-background-tertiary: #f9fbff;
+}
+
+body {
+    background-color: #f9fbff;
+}
+
 /*滚动条*/
 *::-webkit-scrollbar {
     width: 7px;
     height: 7px;
 }
+
 *::-webkit-scrollbar-thumb {
     background: #014371;
 }
+
 /* 兼容Firefox、IE*/
 * {
     scrollbar-width: 10px;
@@ -335,34 +353,99 @@ css = """
     scrollbar-track-color: red;
     scrollbar-arrow-color: blue;
 }
+
 #checkbox {
     height: 270px;
     overflow: auto !important;
 }
+
 [data-testid="checkbox-group"] {
     display: block !important;
 }
+
 #submit-button {
     background: #00d4ad;
     color: white;
     border: 2px solid #00d4ad;
 }
+
+#download-button {
+    background: #00add4;
+    color: white;
+    border: 2px solid #00add4;
+}
+
+#clear-button:active,
+#submit-button:active,
+#download-button:active {
+    box-shadow: inset 0 5px 10px #e1e5ee;
+}
+
+.table-wrap.svelte-1sckpv1.svelte-1sckpv1.svelte-1sckpv1 {
+    border: none;
+}
+
+#network-stats table, 
+#topo-para table, 
+#enrichment table {
+    border-collapse: collapse;
+    box-shadow: 3px 0px 5px #ddd;
+    background-color: white;
+    text-align: center;
+    overflow: hidden;
+    word-break: break-word;
+    margin: auto;
+}
+
 #topo-para thead tr, 
 #enrichment thead tr {
     width: calc(100% - 7px);
 }
+
 #topo-para tbody {
     display: block;
     overflow-y: scroll;
     max-height: 300px;
     width: 100%;
 }
+
+#network-stats thead, 
+#topo-para thead, 
+#enrichment thead {
+    box-shadow: 0 5px 10px #e1e5ee;
+}
+
+#network-stats th, 
+#topo-para th, 
+#enrichment th {
+    padding: 0.7rem 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1rem;
+    font-size: 0.9rem;
+    font-weight: 900;
+    text-align: center;
+}
+
+#network-stats td, 
+#topo-para td, 
+#enrichment td {
+    padding: 0.5rem 0.7rem;
+    box-shadow: 3px 0px 5px #ddd;
+}
+
 #enrichment tbody {
     display: block;
     overflow-y: scroll;
     max-height: 800px;
     width: 100%;
 }
+
+#network-stats tbody tr:nth-child(even), 
+#topo-para tbody tr:nth-child(even), 
+#enrichment tbody tr:nth-child(even) {
+    background: #d3e4f5;
+}
+
 #topo-para tr, 
 #enrichment tr {
     box-sizing: border-box;
@@ -370,6 +453,33 @@ css = """
     display: table;
     width: 100%;
 }
+
+#enrichment tbody tr:hover {
+    background: #E0EEE0;
+    transform: translateY(-3px);
+    transition: all .3s;
+}
+
+#enrichment tbody a {
+    position: relative;
+    text-decoration: none;
+}
+
+#enrichment tbody a::before {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 2px;
+    bottom: 0;
+    left: 0;
+    background-color: #216a9d;
+    transition: width 0.2s ease-in-out;
+}
+
+#enrichment tbody a:hover::before {
+    width: 100%;
+}
+
 #network-stats th span,
 #network-stats td span,
 #topo-para th span,
@@ -378,6 +488,7 @@ css = """
     word-wrap: break-word;
     white-space: normal;
 }
+
 #enrichment th span,
 #enrichment td span {
     min-width: 100px;
@@ -385,7 +496,8 @@ css = """
     word-wrap: break-word;
     word-break: break-all;
     white-space: normal;
-}"""
+}
+"""
 
 # 使用gr.Blocks()创建和组合组件
 with gr.Blocks(css=css) as demo:
@@ -405,38 +517,42 @@ with gr.Blocks(css=css) as demo:
             
             # 创建按钮组件
             with gr.Row():
-                button_clear = gr.Button("Clear")
+                button_clear = gr.Button("Clear", elem_id="clear-button")
                 button_input = gr.Button("Submit", elem_id="submit-button")
 
             # 临时组件
             cache = gr.Textbox(visible=False)
 
-            # 下载按钮
-            button_download = gr.Button("Download Analysis", visible=False, elem_id="download-button")
+            # 下崽按钮
+            # button_download = gr.Button("Download Analysis", visible=False, elem_id="download-button")
 
             # 网络参数输出列表
-            # network_stats = gr.Dataframe(label="Network Stats:", elem_id="network-stats", visible=False)
-            topo_para = gr.Dataframe(label="Topological Parameters:", elem_id="topo-para", visible=False)
+            network_stats = gr.Dataframe(label="Network Stats:", elem_id="network-stats", visible=False)
+            # topo_para = gr.Dataframe(label="Topological Parameters:", elem_id="topo-para", visible=False)
             # gr.update(visible=True)
             
         with gr.Column(scale=3.25, min_width=985):
             # HTML 输出组件
             html_output = gr.HTML(value=example)
-            # 例子组件
-            gr.Examples(examples=[
-                                              "Biomarkers for Diagnosis in CBD2", 
-                                              "Biomarkers for Prognosis in CBD2", 
-                                              "Biomarkers for Treatment in CBD2"
-                                              ], 
-                              label="Try Examples", 
-                              inputs=cache, 
-                              outputs=[protein_input], 
-                              fn=example_proteins, 
-                              cache_examples=True, 
-                              run_on_click=True)
+            with gr.Row():
+                # 例子组件
+                gr.Examples(examples=[
+                                                  "Biomarkers for Diagnosis in CBD2", 
+                                                  "Biomarkers for Prognosis in CBD2", 
+                                                  "Biomarkers for Treatment in CBD2"
+                                                  ], 
+                                  label="Try Examples", 
+                                  inputs=cache, 
+                                  outputs=[protein_input], 
+                                  fn=example_proteins, 
+                                  cache_examples=True, 
+                                  run_on_click=True)
+                # 下崽组件
+                button_download = gr.Button("Download Analysis", visible=False, elem_id="download-button").style(full_width=False)
+            file_download = gr.File(label="Download Analysis", visible=False, elem_id="download-file")
             # 网络参数组件
-            network_stats = gr.Dataframe(label="Network Stats:", elem_id="network-stats", visible=False)
-            # topo_para = gr.Dataframe(label="Topological Parameters:", elem_id="topo-para", visible=False)
+            # network_stats = gr.Dataframe(label="Network Stats:", elem_id="network-stats", visible=False)
+            topo_para = gr.Dataframe(label="Topological Parameters:", elem_id="topo-para", visible=False)
             enrichment = gr.Dataframe(label="Functional Enrichments:", 
                                                  datatype=["str", "html", "str", "str", "number", "number", "str"], 
                                                  elem_id="enrichment", visible=False)
@@ -463,7 +579,8 @@ with gr.Blocks(css=css) as demo:
     # 显示列表
     button_input.click(fn=visible, inputs=protein_input, outputs=[topo_para, network_stats, enrichment, button_download])
     # 下载分析结果
-    button_download.click(fn=download_all, inputs=[protein_input, species_input, slider_input, network_type_input])
+    button_download.click(fn=download_all, inputs=[protein_input, species_input, slider_input, network_type_input], outputs=file_download)
+    button_download.click(fn=download_visible, inputs=[protein_input, species_input, slider_input, network_type_input], outputs=file_download)
 
     # 获取蛋白写入文本框
     protein_choose.change(fn=choose_protein, inputs=protein_choose, outputs=protein_input)
