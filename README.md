@@ -7,27 +7,28 @@ For **Explore** page of [CBD2: Colorectal Cancer Biomarker Database](http://www.
 
 ## Update Log
 
-- [ ] Input components
+- [x] Input components
 
-  - [ ] Add multi-line text box and description
-  - [ ] STRING parameter setting (Dropdown box and Slider)
+  - [x] Add multi-line text box and description
+  - [x] STRING parameter setting (Dropdown box and Slider)
 
-  - [ ] Link database, write multi-select boxes and set styles
+  - [x] Link database, write multi-select boxes and set styles
 
-  - [ ] Support input from file
+  - [x] Support input from file
 
-- [ ] Output component
+- [x] Output component
 
-  - [ ] HTML component for displaying STRING network svg
-  - [ ] dataframe component for displaying network parameters
-  - [ ] dataframe component for displaying enrichment analysis
-    - [ ] Hyperlink to add enrichment results
-  - [ ] Hidden temporary components
+  - [x] HTML component for displaying STRING network svg
+  - [x] Dataframe component for displaying network parameters
+  - [x] Dataframe component for displaying enrichment analysis
+    - [x] Hyperlink to add enrichment results
+  - [x] Hidden temporary components
+  - [x] Output the File component of the compressed package of analysis results
 
-- [ ] Button components and listeners
+- [x] Button components and listeners
 
-  - [ ] Submit button and listener
-  - [ ] Clear button and listener
-  - [ ] Analysis results download button and listener
+  - [x] Submit button and listener
+  - [x] Clear button and listener
+  - [x] Analysis results download button and listener
 
-- [ ] case study (example component)
+- [x] case study (example component)
