@@ -32,3 +32,5 @@ For **Explore** page of [CBD2: Colorectal Cancer Biomarker Database](http://www.
   - [x] Analysis results download button and listener
 
 - [x] case study (example component)
+
+- [ ] Selector based on color classification of enrichment results
