@@ -15,7 +15,6 @@ For **Explore** page of [CBD2: Colorectal Cancer Biomarker Database](http://www.
   - [x] Link database, write multi-select boxes and set styles
 
   - [x] Support input from file
-
 - [x] Output component
 
   - [x] HTML component for displaying STRING network svg
@@ -24,13 +23,12 @@ For **Explore** page of [CBD2: Colorectal Cancer Biomarker Database](http://www.
     - [x] Hyperlink to add enrichment results
   - [x] Hidden temporary components
   - [x] Output the File component of the compressed package of analysis results
-
 - [x] Button components and listeners
 
   - [x] Submit button and listener
   - [x] Clear button and listener
   - [x] Analysis results download button and listener
+- [ ] Other
+  - [x] case study (example component)
+  - [ ] Selector based on color classification of enrichment results
 
-- [x] case study (example component)
-
-- [ ] Selector based on color classification of enrichment results
